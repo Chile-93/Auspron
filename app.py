@@ -120,6 +120,20 @@ def patient_detail(patient_id):
 
 
 
+@app.route('/delete_visit/<int:visit_id>/<int:patient_id>', methods=['POST'])
+def delete_visit(visit_id, patient_id):
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("DELETE FROM visit WHERE visit_id = :vid"), {"vid": visit_id})
+
+        return redirect(url_for('patient_detail', patient_id=patient_id))
+
+    except Exception as e:
+        return f"❌ Error deleting visit: {str(e)}", 500
+
+
+
+
 # Add patient
 @app.route('/add_patient', methods=['GET', 'POST'])
 def add_patient():
