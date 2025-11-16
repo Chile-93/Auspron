@@ -108,13 +108,40 @@ def patient_detail(patient_id):
     if not rows:
         return render_template("error.html", message="Patient not found")
 
-    # first row always contains patient info
     patient_info = rows[0]
+
+    # ✔ remove duplicates by grouping visits
+    visits = {}
+    for r in rows:
+        vid = r.visit_id
+        if vid not in visits:
+            visits[vid] = {
+                "visit_id": r.visit_id,
+                "visit_date": r.visit_date,
+                "doctor_name": r.doctor_name,
+                "specialization": r.specialization,
+                "diagnosis": r.diagnosis,
+                "treatment": r.treatment,
+                "visual_acuity_left": r.visual_acuity_left,
+                "visual_acuity_right": r.visual_acuity_right,
+                "intraocular_pressure": r.intraocular_pressure,
+                "follow_up_date": r.follow_up_date,
+                "prescriptions": []
+            }
+
+        # append prescription row
+        if r.drug_name:
+            visits[vid]["prescriptions"].append({
+                "drug_name": r.drug_name,
+                "dosage": r.dosage,
+                "duration": r.duration,
+                "notes": r.prescription_notes
+            })
 
     return render_template(
         "patient_detail.html",
         patient=patient_info,
-        visits=rows  # 👈 FIXED
+        visits=list(visits.values())
     )
 
 
@@ -124,12 +151,39 @@ def patient_detail(patient_id):
 def delete_visit(visit_id, patient_id):
     try:
         with engine.begin() as conn:
-            conn.execute(text("DELETE FROM visit WHERE visit_id = :vid"), {"vid": visit_id})
+
+            # 1️⃣ Delete prescriptions for this visit
+            conn.execute(text("""
+                DELETE FROM prescriptions 
+                WHERE visit_id = :vid
+            """), {"vid": visit_id})
+
+            # 2️⃣ Delete visit
+            conn.execute(text("""
+                DELETE FROM visit WHERE visit_id = :vid
+            """), {"vid": visit_id})
 
         return redirect(url_for('patient_detail', patient_id=patient_id))
 
     except Exception as e:
         return f"❌ Error deleting visit: {str(e)}", 500
+
+
+
+
+
+
+
+
+@app.route('/confirm_delete_visit/<int:visit_id>/<int:patient_id>')
+def confirm_delete_visit(visit_id, patient_id):
+    return render_template('confirm_delete_visit.html',
+                           visit_id=visit_id,
+                           patient_id=patient_id)
+
+
+
+
 
 
 
@@ -210,6 +264,28 @@ def add_visit():
     with engine.connect() as conn:
         doctors = conn.execute(text("SELECT doctor_id, doctor_name FROM doctor ORDER BY doctor_name")).fetchall()
     return render_template("add_visit.html", doctors=doctors)
+
+
+
+
+
+
+@app.route('/confirm_delete_patient/<int:patient_id>')
+def confirm_delete_patient(patient_id):
+    with engine.connect() as conn:
+        patient = conn.execute(
+            text("SELECT first_name, last_name FROM patients WHERE patient_id = :id"),
+            {"id": patient_id}
+        ).fetchone()
+
+    if not patient:
+        return render_template("error.html", message="Patient not found")
+
+    return render_template("confirm_delete.html", patient=patient, patient_id=patient_id)
+
+
+
+
 
 
 # Delete patient (PostgreSQL-compatible using USING)
