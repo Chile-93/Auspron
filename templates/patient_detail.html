@@ -61,53 +61,93 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
+
+                    <!-- Corrected Body -->
                     <tbody>
                         {% for v in visits %}
                         <tr>
+
+                            <!-- Visit Date -->
                             <td>{{ v.visit_date or '-' }}</td>
+
+                            <!-- Doctor -->
                             <td>{{ v.doctor_name or '-' }} {% if v.specialization %}({{ v.specialization }}){% endif %}</td>
+
+                            <!-- Diagnosis -->
                             <td>{{ v.diagnosis or '-' }}</td>
+
+                            <!-- Treatment -->
                             <td>{{ v.treatment or '-' }}</td>
+
+                            <!-- Visual Acuity -->
                             <td>
                                 {% if v.visual_acuity_left is not none and v.visual_acuity_right is not none %}
                                     {{ v.visual_acuity_left }} / {{ v.visual_acuity_right }}
-                                {% else %}
-                                    -
-                                {% endif %}
+                                {% else %}-{% endif %}
                             </td>
+
+                            <!-- IOP -->
                             <td>{{ v.intraocular_pressure or '-' }}</td>
+
+                            <!-- Follow-up -->
                             <td>{{ v.follow_up_date or '-' }}</td>
-                            <td>{{ v.drug_name or '-' }}</td>
-                            <td>{{ v.dosage or '-' }}</td>
-                            <td>{{ v.duration or '-' }}</td>
-                            <td>{{ v.prescription_notes or '-' }}</td>
+
+                            <!-- Drug -->
+                            <td>
+                                {% if v.prescriptions %}
+                                    {{ v.prescriptions[0].drug_name }}
+                                {% else %}-{% endif %}
+                            </td>
+
+                            <!-- Dosage -->
+                            <td>
+                                {% if v.prescriptions %}
+                                    {{ v.prescriptions[0].dosage }}
+                                {% else %}-{% endif %}
+                            </td>
+
+                            <!-- Duration -->
+                            <td>
+                                {% if v.prescriptions %}
+                                    {{ v.prescriptions[0].duration }}
+                                {% else %}-{% endif %}
+                            </td>
+
+                            <!-- Prescription Notes -->
+                            <td>
+                                {% if v.prescriptions %}
+                                    {{ v.prescriptions[0].notes }}
+                                {% else %}-{% endif %}
+                            </td>
+
+                            <!-- Actions -->
                             <td>
                                 {% if v.visit_id %}
                                     <a href="{{ url_for('confirm_delete_visit', visit_id=v.visit_id, patient_id=patient.patient_id) }}"
-                                      class="btn btn-danger btn-sm">
-                                          Delete Visit
+                                       class="btn btn-danger btn-sm">
+                                        Delete Visit
                                     </a>
-
                                 {% else %}
                                     <span class="text-muted">No actions</span>
                                 {% endif %}
                             </td>
+
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+
             {% else %}
                 <p class="text-muted">No visits or prescriptions found.</p>
             {% endif %}
         </div>
     </div>
 
-   <a href="{{ url_for('confirm_delete_patient', patient_id=patient.patient_id) }}" 
-   class="btn btn-danger">
-   Delete Patient
-</a>
-
-
+    <!-- Delete Patient Button -->
+    <a href="{{ url_for('confirm_delete_patient', patient_id=patient.patient_id) }}" 
+       class="btn btn-danger">
+       Delete Patient
+    </a>
 
 </div>
 
