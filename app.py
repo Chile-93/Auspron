@@ -210,12 +210,18 @@ def add_patient():
         try:
             with engine.begin() as conn:
                 patient_id = conn.execute(text(query), data).scalar()
-            # ✅ Redirect instead of rendering directly
-            return redirect(url_for('view_patients'))
+
+            # Render your success page
+            return render_template(
+                "success.html",
+                message="Patient added successfully!",
+                patient_id=patient_id
+            )
         except Exception as e:
             return render_template("error.html", message=str(e))
 
     return render_template('add_patient.html')
+
 
 
 
